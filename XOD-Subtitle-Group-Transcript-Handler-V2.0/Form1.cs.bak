@@ -1,0 +1,211 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Windows.Forms.Design;
+using MaterialSkin.Animations;
+using MaterialSkin.Controls;
+using System.IO;
+
+namespace 西欧帝字幕组_时间轴脚本_V2._0
+{
+    public partial class Form1 : MaterialForm
+    {
+        private string Default = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+        private string impString;
+        private string resolution;
+        List<Dtaobj> db = new List<Dtaobj>();
+
+        public Form1()
+        {
+            InitializeComponent();
+            dataGridView1.Columns[0].Width = 27;
+            dataGridView1.Columns[1].Width = 305;
+            dataGridView1.Columns[2].Width = 305;
+            dataGridView1.AllowUserToResizeColumns = false;
+            mrbCnup.Checked = true;
+            cbResolution.Text = "720p";
+        }
+
+
+        private string[] split(string str)
+        {
+            string[] rtstr;
+            rtstr = str.Split('\n');
+            return rtstr;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            mlbTrans.Text = "翻译:";
+            mdtextPath.Text = Default;
+        }
+
+        private void mlbTrans_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void mdTextTrans_Click(object sender, EventArgs e)
+        {
+            if(mdTextTrans.Text == "请输入翻译昵称，多个用分号隔开")
+            {
+                mdTextTrans.Text = "";
+                
+            }
+        }
+
+        private void mdTextTrans_Leave(object sender, EventArgs e)
+        {
+            if(mdTextTrans.Text == "")
+            {
+                mdTextTrans.Text = "请输入翻译昵称，多个用分号隔开";
+                
+            }
+        }
+
+        private void mdTextTimeline_Click(object sender, EventArgs e)
+        {
+            if (mdTextTimeline.Text == "请输入时间轴昵称，多个用分号隔开")
+            {
+                mdTextTimeline.Text = "";
+            }
+        }
+        private void mdTextChecker_Click(object sender, EventArgs e)
+        {
+            if (mdTextChecker.Text == "请输入校对昵称，多个用分号隔开")
+            {
+                mdTextChecker.Text = "";
+            }
+        }
+        private void mdTextChecker_Leave(object sender, EventArgs e)
+        {
+            if (mdTextChecker.Text == "")
+            {
+                mdTextChecker.Text = "请输入校对昵称，多个用分号隔开";
+            }
+        }
+
+        private void mdTextTimeline_Leave_1(object sender, EventArgs e)
+        {
+            if (mdTextTimeline.Text == "")
+            {
+                mdTextTimeline.Text = "请输入时间轴昵称，多个用分号隔开";
+            }
+        }
+
+        private void mdRaiseBttImp_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Multiselect = false;
+            ofd.Filter = "txt(*.txt)|*.txt";
+            if(ofd.ShowDialog() == DialogResult.OK)
+            {
+                mdtextPath.Text = ofd.FileName;
+            }
+        }
+
+        private void mdRbttImp_Click(object sender, EventArgs e)
+        {
+            string path = mdtextPath.Text;
+            try
+            {
+                StreamReader sr = new StreamReader(path, Encoding.Default);
+                impString = sr.ReadToEnd();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Error");
+            }
+            string[] rtn = split(impString);
+            List<string> Lstr = new List<string>();
+            int tmp = rtn.Length;
+            for (int i = 0;i<= tmp - 1; i++){
+                Lstr.Add(rtn[i]);
+            }
+            tmp--;
+            List<string> En = new List<string>();
+            List<string> Cn = new List<string>();
+            int a = 0;
+            for (int i = 0; i <= tmp; i++)
+            {
+
+                if (Lstr[i][0] != '#')
+                {
+                    if ((i-a)%3 == 0)
+                    {
+                        Cn.Add(Lstr[i]);
+                    }
+                    else if((i - a) % 3 == 1)
+                    {
+                        En.Add(Lstr[i]);
+                    }
+                    else
+                    {
+
+                    }
+                }
+                else if (Lstr[i][0] == '#')
+                {
+                    Cn.Add(Lstr[i]);
+                    En.Add("注释");
+                    a=a+2;
+                    i++;
+                }
+                else
+                {
+                    try
+                    {
+                        throw new Exception("文件格式不正确");
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("文件格式不正确");
+                    }
+                } 
+            }
+            List<string> lsttmp = new List<string>();
+            if (mrbEnup.Checked == true)
+            {
+                lsttmp = Cn;
+                Cn = En;
+                En = lsttmp;
+            }
+            int l = Cn.Count;
+            int counter = 0;
+            for (int i = 0; i <= l - 1; i++)
+            {
+                
+                try
+                {
+                    
+                    db.Add(new Dtaobj(i + 1, Cn[i], En[i]));
+                }
+                catch (Exception)
+                {
+                    counter++;
+                    MessageBox.Show("请检查文件句末是否有单数行，有 " + counter + " 行未被载入");
+                    
+                }
+                
+            }
+            dataGridView1.DataSource = db;
+        }
+
+        private void materialRaisedButton1_Click(object sender, EventArgs e)
+        {
+            resolution = cbResolution.Text;
+            Function.Export(resolution,db,mdTextTrans.Text,mdTextChecker.Text,mdTextTimeline.Text);
+        }
+
+        private void dataGridView1_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            
+        }
+    }
+}
